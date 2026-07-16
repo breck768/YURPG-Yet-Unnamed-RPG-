@@ -1,7 +1,8 @@
-#include<iostream>
+#include"defines.h"
+#include"actors.cpp"
 
 int main()
 {
-	std::cout << "YURPG";
+	cout << "YURPG" << endl;
 	return 0;
 }
