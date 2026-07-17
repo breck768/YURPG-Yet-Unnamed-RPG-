@@ -1,15 +1,21 @@
-//Includes, usings, and macros
 #pragma once
 
-//Includes and junk
-#include<iostream>
-#include<vector>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <random>
+#include <variant>
+
 using std::string;
 using std::vector;
 using std::endl;
 using std::cout;
+using std::cin;
+using std::unordered_map;
 
 //Macros used for elemental affinities
+#define NONE 0
 #define FIRE 1
 #define ICE 2
 #define THUNDER 3
@@ -18,3 +24,12 @@ using std::cout;
 #define WARRIOR 1
 #define MAGE 2
 #define ROGUE 3
+
+int getRandNum(int min, int max)
+{
+    std::random_device randy;
+    std::mt19937 gen(randy());
+    std::uniform_int_distribution<int> distr(min, max);
+    int randNum = distr(gen);
+    return randNum;
+}
