@@ -1,64 +1,71 @@
 import pygame
 import sys
-from dungeon import DungeonGenerator
+from dungeon import Dungeon
 
 # This script launches the game.
 
 """
 TODO:
-- Create camera with player at center that moves viewable window around
-  a larger map
-- Create visibility radius around player - any tiles outside the radius are black
-  out
+- Create renderer module that uses viewport-sized camera with player at the center
+  to move around the dungeon. Need to render only tiles in range of camera by
+  converting their world space coordinates to viewport space.
+- Implement player visibility using raycasting. Any tiles blocked by wall or
+  outside visibility radius are black out
 - Implement pathfinding module
-- Implement algorithm for spawning enemies
-- Implement dungeon levels, where higher the level == stronger the enemies and more
-  difficult dungeon
+- Implement algorithm for spawning enemies, items, and portal to reach next dungeon
+- Implement state machine that determines what can happen in game loop
+  depending on game state
+  (MENU, EXPLORE, COMBAT, etc)
 """
+
+### Constants ###
+WIN_WIDTH = 1024
+WIN_HEIGHT = 768
+TILE_SIZE = 4
 
 ### Controls ###
 # Press q to quit
 
-# Generate new dungeon
+# Move this into renderer module and change so that it takes world tile data as
+# input and renders only tiles in the viewport by converting world space coordinates
+# to viewport space
 def renderGraphics(map):
     for i, tile in enumerate(map):
-        x = i % map_width
-        y = i // map_width
-        if map[i] == 1:
-            color = (255, 255, 255)
-        elif map[i] == 0:
+        x = i % viewport_cols
+        y = i // viewport_cols
+        if map[i] == 0:
             color = (0, 50, 0)
+        elif map[i] == 1:
+            color = (255, 255, 255)
+        elif map[i] == 2:
+            color = (139, 69, 19)
+        elif map[i] == 3:
+            color = (255, 255, 0)
+        elif map[i] == 4:
+            color = (0, 0, 255)
         else:
             color = (0, 0, 0)
-        pygame.draw.rect(background, color, pygame.Rect(x*tile_size, y*tile_size, tile_size, tile_size))
+        pygame.draw.rect(background, color, pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE))
 
 
 pygame.init()
-W, H = 1024, 768                                            # window resolution
-tile_size = 8
-map_width = W // tile_size                                  # window width in tiles
-map_height = H // tile_size                                 # window height in tiles
-pygame.display.set_caption("Dungeon Generator Prototype")
-screen = pygame.display.set_mode((W, H))                    # foreground surface to draw objects that move
-background = pygame.Surface((W, H))                         # background surface to draw stationary objects
-clock = pygame.time.Clock()                                 # Frame timer
+viewport_cols = WIN_WIDTH // TILE_SIZE
+viewport_rows = WIN_HEIGHT // TILE_SIZE
+dungeon_cols = viewport_cols * 5
+dungeon_rows = viewport_rows * 5
+screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))                    # foreground surface to draw objects that move
+background = pygame.Surface((WIN_WIDTH, WIN_HEIGHT))                         # background surface to draw stationary objects
+clock = pygame.time.Clock()
 
-# Create dungeon generator (test)
-dun_gen = DungeonGenerator(tile_size, map_width, map_height - 5)
-renderGraphics(dun_gen.generateDungeon())
+# Dungeon generator test
+dungeon = Dungeon(TILE_SIZE, viewport_cols, viewport_rows)
+renderGraphics(dungeon.generateDungeon())
 
 # Game loop
 run = True
 while run:
     screen.fill((0,0,0))                                # each frame screen is cleared/redrawn
     screen.blit(background, (0, 0))                     # draw static background
-
-    # Instructions
-    font = pygame.font.Font(None, tile_size*5)
-    instr_box = pygame.Rect(0, H-tile_size*5, W, tile_size*5)
-    instr = font.render("Press g to generate a new dungeon and q to quit.", True, (255, 0, 0))
-    instr_rect = instr.get_rect(center=instr_box.center)
-    screen.blit(instr, instr_rect)
 
     # Display start menu on launch:
         # NEW GAME
@@ -71,9 +78,12 @@ while run:
     # Once character has been created, generate a level 1 dungeon and place
     # player/enemies/items
 
+    # If game is loaded, read data from save file, deserialize it,
+    # and draw the tile map as it was when saved.
+
     # ...
 
-    # Controls
+    # Controls - (change depending on game state)
     for e in pygame.event.get():
         # on quit
         if e.type == pygame.KEYDOWN:
@@ -82,7 +92,7 @@ while run:
                 pygame.quit()
                 sys.exit()
             if e.key == pygame.K_g:
-                renderGraphics(dun_gen.generateDungeon())
+                renderGraphics(dungeon.generateDungeon())
 
     pygame.display.flip()
     clock.tick(60)

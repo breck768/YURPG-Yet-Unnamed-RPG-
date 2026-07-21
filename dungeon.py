@@ -1,59 +1,92 @@
 from node import Node
+import random
 
 """
-DUNGEON GENERATOR CLASS (Work in Progress)
-
-The dungeon is created by first performing binary space partitioning to construct
-a tree where the leaf nodes end up being the rooms of the dungeon. After building the
-tree, the nodes are traversed and the dungeon tile map is updated so that all floor
-tiles have value of 0 and all wall tiles have value of 1
-
-The goal for each dungeon is to find the portal/stairs/whatever we decide on that
-takes you to the next level. When proceeding to a new level, the current dungeon map
-is serialized and stored in the player's save file, the game is saved, and a new
-dungeon is generated that is 1 level higher than the previous one.
-
 TODO:
-- Shrink rooms and create corridors + doorway tiles connecting them
-- Implement new types of tiles such
-- Make generated tile maps much larger and move around to move viewable area around
-  the map
+- Implement doorway, enemy, key, and portal tiles
+- Make generated tile maps larger
+- Implement local/world map scaling
 """
 
-class DungeonGenerator:
+class Dungeon:
     def __init__(self, cell_size, map_width, map_height):
         self.root = None
+        self.cell_size = cell_size
         self.map_width = map_width
         self.map_height = map_height
-        self.room_count =  10
-        self.min_cell_size = 4
-        self.dungeon = []
+        self.total_rooms =  20
+        self.min_cell_size = 10
+        self.rooms = None
+        self.tiles = None
+        self.player_pos = None
+
+    def shrinkRooms(self):
+        self.root.shrink(self.min_cell_size)
+
+    def findNeighbors(self):
+        self.root.getRooms(self.rooms)
+        for room_A in self.rooms:
+            for room_B in self.rooms:
+                if room_A != room_B:
+                    if room_A.x2 == room_B.x1:
+                        if max(room_A.y1, room_B.y1) < min(room_A.y2, room_B.y2):
+                            room_A.h_neighbors.append(room_B)
+                    if room_A.y2 == room_B.y1:
+                        if max(room_A.x1, room_B.x1) < min(room_A.x2, room_B.x2):
+                            room_A.v_neighbors.append(room_B)
+
+    def createHCorridor(self, x1, x2, y):
+        for x in range(x1, x2):
+            self.tiles[y * self.map_width + x] = 3
+
+    def createVCorridor(self, y1, y2, x):
+        for y in range(y1, y2):
+            self.tiles[y * self.map_width + x] = 3
 
     def generateDungeon(self):
-        rooms = 1
+        cur_room_count = 1
         self.refreshDungeon()
-        while rooms < self.room_count:
+        while cur_room_count < self.total_rooms:
             if self.root.divideCell(self.min_cell_size):
-                rooms += 1
+                cur_room_count += 1
+        self.findNeighbors()
+        # set doorway tiles here before shrinking
+        self.shrinkRooms()
         self.updateTiles(self.root)
-        return self.dungeon
+        self.placePlayer()
+        return self.tiles
+
+    def placePlayer(self):
+        start_room = self.rooms[random.randint(1, self.total_rooms-1)]
+        start_col = random.randint(start_room.x1 + 2, start_room.x2 - 2)
+        start_row = random.randint(start_room.y1 + 2, start_room.y2 - 2)
+        starting_tile = start_row * self.map_width + start_col
+        self.tiles[starting_tile] = 4
+        self.player_pos = [starting_tile // self.map_width, starting_tile % self.map_width]
 
     def updateTiles(self, node):
-        if node.left is None and node.right is None:
-            for y in range(node.y, node.y2):
-                for x in range(node.x, node.x2):
-                    if x == node.x or x == node.x2-1 or y == node.y or y == node.y2-1:
+        for room in self.rooms:
+            for y in range(room.y1, room.y2):
+                for x in range(room.x1, room.x2):
+                    if x == room.x1 or x == room.x2-1 or y == room.y1 or y == room.y2-1:
                         tile_type = 1
                     else:
                         tile_type = 0
-                    self.dungeon[y * self.map_width + x] = tile_type
-
-        if node.left:
-            self.updateTiles(node.left)
-
-        if node.right:
-            self.updateTiles(node.right)
+                    self.tiles[y * self.map_width + x] = tile_type
+            for neighbor in room.h_neighbors:
+                min_y2 = min(room.y2, neighbor.y2)
+                max_y1 = max(room.y1, neighbor.y1)
+                if min_y2 - max_y1 >= self.cell_size:
+                    cy = random.randint(max_y1+1, (min_y2-1) - 1)
+                    self.createHCorridor(room.x2, neighbor.x1, cy)
+            for neighbor in room.v_neighbors:
+                min_x2 = min(room.x2, neighbor.x2)
+                max_x1 = max(room.x1, neighbor.x1)
+                if min_x2 - max_x1 >= self.cell_size:
+                    cx = random.randint(max_x1+1, (min_x2-1) - 1)
+                    self.createVCorridor(room.y2, neighbor.y1, cx)
 
     def refreshDungeon(self):
         self.root = Node(1, 1, self.map_width-1, self.map_height-1)
-        self.dungeon = [-1] * (self.map_width * self.map_height)
+        self.rooms = []
+        self.tiles = [-1] * (self.map_width * self.map_height)
