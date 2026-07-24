@@ -18,16 +18,22 @@ Floor becomes 0x, ceiling becomes 2.
 
 def playerAttack(attacker, defender):
     damage = attacker.strength + weaponDict[attacker.weapon].attack - defender.defense
+    if damage < 0:
+        damage = 0
     randy = random.randint(-50, 50)
     mul = float(randy)/100
     mul += 1
     damage = damage * mul
+    defender.health -= damage
     return int(damage)
 
 def enemyAttack(attacker, defender):
     damage = attacker.strength - defender.defense - armorDict[defender.armor].defense
+    if damage < 0:
+        damage = 0
     randy = random.randint(-50, 50)
     mul = float(randy)/100
     mul += 1
     damage = damage * mul
+    defender.health -= damage
     return int(damage)

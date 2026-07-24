@@ -1,9 +1,18 @@
 from combatDefines import *
-from combatItems import *
 from combatAttacks import *
+
+def characterInit(): # Creates a player object using entered name and job, returns pointer to object
+    name = input("Enter character name:\n")
+    job = int(input("Enter job.\n1. Warrior\n2. Mage\n3. Rogue\n"))
+    while job < 1 or job > NUM_OF_JOBS:
+        job = int(input("Enter a valid job.\n"))
+    player = Player(name, job)
+    return player
 
 class Actor: # Base actor class from which players and enemies inherit from
     name = ""
+
+    movementRange = int()
 
     health = int()
     maxHealth = int()
@@ -36,11 +45,16 @@ class Player(Actor):
     armor = "" 
     accessory = ""
 
+    magicAttacks = list() # List of pointers to spells
+
     def __init__(self, name, job):
         self.name = name
 
+        items = {} # Dictionary which uses item name as reference, value is the amount held
+
         match job:
             case _ if job == WARRIOR: # Default stat definitions
+                self.movementRange = 3
                 self.maxHealth = 50
                 self.maxMana = 0
                 self.health = 50
@@ -56,13 +70,14 @@ class Player(Actor):
                 self.armor = "Chestplate"
                 self.accessory = "Armband"
             case _ if job == MAGE:
+                self.movementRange = 3
                 self.maxHealth = 20
                 self.maxMana = 20
                 self.health = 20
                 self.mana = 20
 
                 self.strength = 3
-                self.defense = 2
+                self.defense = 0
                 self.magicDefense = 10
                 self.speed = 3
                 self.magic = 10
@@ -71,6 +86,7 @@ class Player(Actor):
                 self.armor = "Shirt"
                 self.accessory = "Necklace"
             case _ if job == ROGUE:
+                self.movementRange = 3
                 self.maxHealth = 40
                 self.maxMana = 0
                 self.health = 40
@@ -91,6 +107,7 @@ class Player(Actor):
 
 class Goblin(Actor): # Remaining class definitions are for enemy types
     name = "Goblin"
+    movementRange = 2
     health = 10
     maxHealth = 10
 
@@ -101,24 +118,7 @@ class Goblin(Actor): # Remaining class definitions are for enemy types
 
     level = 1
 
+    attackList = list() # List of pointers to all abilites (spells and basic attack)
 
-def characterInit():
-    name = input("Enter character name:\n")
-    job = int(input("Enter job.\n1. Warrior\n2. Mage\n3. Rogue\n"))
-    while job < 1 or job > NUM_OF_JOBS:
-        job = int(input("Enter a valid job.\n"))
-    player1 = Player(name, job)
-    enemy = Goblin()
-
-    print(f"Player deals {playerAttack(player1, enemy)} damage!\n")
-    print(f"Enemy deals {enemyAttack(enemy, player1)} damage!\n")
-    
-
-def combatInit():
-    thing = 0
-
-weaponInit()
-armorInit()
-
-characterInit()
-
+    def __init__(self):
+        self.attackList.append(enemyAttack)
