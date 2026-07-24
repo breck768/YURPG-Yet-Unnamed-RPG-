@@ -31,13 +31,14 @@ class Actor: # Base actor class from which players and enemies inherit from
     absorb = int() # Damage turns into healing
 
     level = int()
-    exp = int()
-    totalExp = int() 
 
     attackList = list() # List of function pointers to valid attacks
 
 class Player(Actor):
     job = int()
+
+    exp = int()
+    totalExp = int() 
 
     # Equipment variables are the names of the equipment.
     # Equipment names serve as keys for a dictionary containing structs that define behavior and stats.

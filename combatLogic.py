@@ -4,7 +4,24 @@ from combatItems import *
 from combatAttacks import *
 from combatActors import *
 from combatDefines import *
+"""
+TODO:
+- Bounds checking lol
+- Multiple players and enemies (might just work?)
+- Movement code for enemies (all of them will use the same pathfinding, just travel directly towards
+nearest party member within movement range)
+- Implement movement range checking in general
+- Items 
+- Magic
+- Basic stat displays (likely just health and timer values, or large stat dumps idk)
+- Interface system (miiiiiiiight make everything a class???)
+    - Bare minimum requires modularization and redefinition of all text based code
+- Level system and stat growth
+- Item rarity
+- Enemy rarity? (may just be the level)
+- Expand content
 
+"""
 battleTimer = {} # Dict of integers that uses actor pointers as an index to their current value
 
 def createBattle(actors, x, y): # Returns a 2d list of either characters '-' or pointers to actors
